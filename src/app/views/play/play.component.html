@@ -1,0 +1,9 @@
+<div class="container">
+  <div class="main">
+    <div class="board">
+      @for(square of squares(); track $index) {
+      <div class="square" [ngClass]="{ black: square.isBlack }"></div>
+      }
+    </div>
+  </div>
+</div>

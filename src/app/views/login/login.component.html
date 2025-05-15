@@ -1,0 +1,14 @@
+<div class="main-container">
+  <div class="form-wrapper">
+    <h1>Register and start playing online!</h1>
+
+    <form [formGroup]="form" (ngSubmit)="searchMatch()">
+      <div class="input-container">
+        <label for="username">Username</label>
+        <input id="username" type="text" />
+      </div>
+
+      <button type="submit">Start Game</button>
+    </form>
+  </div>
+</div>
