@@ -2,13 +2,21 @@
   <div class="form-wrapper">
     <h1>Register and start playing online!</h1>
 
-    <form [formGroup]="form" (ngSubmit)="searchMatch()">
-      <div class="input-container">
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      @let usernameControl = form.controls.username;
+      <div
+        class="input-container"
+        [ngClass]="{ error: isSubmitted() && usernameControl.invalid }"
+      >
         <label for="username">Username</label>
-        <input id="username" type="text" />
+        <input id="username" type="text" formControlName="username" autofocus />
+
+        @if(isSubmitted() && usernameControl.invalid) {
+        <span class="error-msg">{{ getErrorMessage(usernameControl) }}</span>
+        }
       </div>
 
-      <button type="submit">Start Game</button>
+      <chess-button type="submit" label="Start Game" />
     </form>
   </div>
 </div>

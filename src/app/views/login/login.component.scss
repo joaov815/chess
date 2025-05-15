@@ -29,6 +29,11 @@
         flex-direction: column;
         gap: 0.5rem;
 
+
+        label {
+          cursor: pointer;
+        }
+
         input {
           height: 3rem;
           min-width: 15rem;
@@ -36,21 +41,14 @@
           border: none;
           padding: 0.5rem;
         }
-      }
 
-      button {
-        height: 3rem;
-        background-color: #81b64c;
-        border: none;
-        width: 100%;
-        border-radius: 0.5rem;
-        cursor: pointer;
-
-        &:hover {
-          opacity: 0.8;
-        }
-        &:active {
-          opacity: 0.7;
+        &.error {
+          input {
+            border: 2px solid #fd6969;
+          }
+          .error-msg, label {
+            color: #fd6969;
+          }
         }
       }
     }

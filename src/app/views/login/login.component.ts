@@ -1,18 +1,48 @@
-import { Component } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { NgClass } from '@angular/common';
+import { Component, signal } from '@angular/core';
+import {
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
+
+import { ButtonComponent } from '../../components/button/button.component';
 
 @Component({
   selector: 'chess-login',
-  imports: [ReactiveFormsModule],
+  imports: [NgClass, ReactiveFormsModule, ButtonComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
 export class LoginComponent {
   form = new FormGroup({
-    username: new FormControl('', Validators.minLength(3)),
+    username: new FormControl(null, [
+      Validators.required,
+      Validators.minLength(3),
+    ]),
   });
+  isSubmitted = signal(false);
 
-  searchMatch() {
-    //
+  getErrorMessage(control: FormControl): string {
+    const errorsMessagesPerKey: Record<string, (...args: any) => string> = {
+      required: () => 'Required field',
+      minlength: (obj: any) =>
+        `Should be at least ${obj.requiredLength} characters`,
+    };
+
+    const firstError = Object.entries(control.errors ?? {})[0];
+
+    if (!firstError) return '';
+
+    return errorsMessagesPerKey[firstError[0]](firstError[1]) ?? '';
+  }
+
+  submit(): void {
+    this.isSubmitted.set(true);
+
+    if (this.form.invalid) return;
+
+    // TODO: submit
   }
 }
