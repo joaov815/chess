@@ -1,9 +1,10 @@
 <div class="main-container">
   <div class="form-wrapper">
-    <h1>Register and start playing online!</h1>
+    <h1>Register and start playing chess online!</h1>
 
     <form [formGroup]="form" (ngSubmit)="submit()">
       @let usernameControl = form.controls.username;
+
       <div
         class="input-container"
         [ngClass]="{ error: isSubmitted() && usernameControl.invalid }"

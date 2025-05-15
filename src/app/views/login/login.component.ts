@@ -8,6 +8,7 @@ import {
 } from '@angular/forms';
 
 import { ButtonComponent } from '../../components/button/button.component';
+import { MatchService } from '../../services/match.service';
 
 @Component({
   selector: 'chess-login',
@@ -16,6 +17,8 @@ import { ButtonComponent } from '../../components/button/button.component';
   styleUrl: './login.component.scss',
 })
 export class LoginComponent {
+  constructor(private readonly _matchService: MatchService) {}
+
   form = new FormGroup({
     username: new FormControl(null, [
       Validators.required,
@@ -43,6 +46,8 @@ export class LoginComponent {
 
     if (this.form.invalid) return;
 
-    // TODO: submit
+    this._matchService.connect(this.form.value.username!, (a) => {
+      console.log(a);
+    });
   }
 }
