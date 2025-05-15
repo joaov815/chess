@@ -1,29 +1,30 @@
 import { NgClass } from '@angular/common';
 import { Component, signal } from '@angular/core';
 
-import { GameService } from '../../game.service';
-import { getBoardSquares, Square } from '../../models/square';
+import {
+  getBoardSquares,
+  getInitialPositions,
+  Square,
+} from '../../models/square';
+import { Piece } from '../../models/piece';
+import { MatchService } from '../../services/match.service';
 
 @Component({
   selector: 'chess-play',
   imports: [NgClass],
   templateUrl: './play.component.html',
-  styleUrl: './play.component.scss'
+  styleUrl: './play.component.scss',
 })
 export class PlayComponent {
- constructor(private readonly gameService: GameService) {}
+  constructor(private readonly _matchService: MatchService) {}
 
   squares = signal<Square[]>([]);
+  pieces = signal<Record<string, Piece>>({});
 
   ngOnInit() {
-    this.squares.set(getBoardSquares());
-  }
+    const color = this._matchService.myColor!;
 
-  test() {
-    this.gameService.move();
+    this.squares.set(getBoardSquares(color));
+    this.pieces.set(getInitialPositions(this.squares()));
   }
-
-  // connect() {
-  //   this.gameService.connect(this.form.value.username!);
-  // }
 }

@@ -4,9 +4,13 @@ import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { environment } from '../../enviroments/environment';
 import { MatchRequestTypeEnum } from '../models/socket-base-request';
 import {
+  IMatchStartedResponse,
   ISocketBaseResponse,
   MatchResponseTypeEnum,
 } from '../models/socket-base-response copy';
+import { filter, Observable } from 'rxjs';
+import { PieceColorEnum } from '../models/piece';
+import { Router } from '@angular/router';
 
 export enum ConnectionStatus {
   CONNECTED,
@@ -16,16 +20,20 @@ export enum ConnectionStatus {
 
 interface IConnectOptions {
   username: string;
-  onMessageCb: (body: ISocketBaseResponse) => void;
   onConnected?: () => void;
 }
 
 @Injectable({ providedIn: 'root' })
 export class MatchService {
-  private _socket$!: WebSocketSubject<any>;
-  connectionStatus = ConnectionStatus.DISCONNECTED;
+  constructor(private readonly _router: Router) {}
 
-  connect({ username, onMessageCb, onConnected }: IConnectOptions) {
+  private _socket$!: WebSocketSubject<any>;
+
+  socketConnection$?: Observable<ISocketBaseResponse>;
+  connectionStatus = ConnectionStatus.DISCONNECTED;
+  myColor?: PieceColorEnum;
+
+  connect({ username, onConnected }: IConnectOptions) {
     if (this.connectionStatus !== ConnectionStatus.DISCONNECTED) return;
 
     this.connectionStatus = ConnectionStatus.CONNECTING;
@@ -48,26 +56,33 @@ export class MatchService {
       },
     });
 
-    this._socket$.asObservable().subscribe((message: ISocketBaseResponse) => {
-      if (message.type === MatchResponseTypeEnum.PING) return;
+    this.socketConnection$ = this._socket$
+      .asObservable()
+      .pipe(
+        filter(
+          (message: ISocketBaseResponse) =>
+            message.type !== MatchResponseTypeEnum.PING
+        )
+      );
 
-      onMessageCb(message);
+    this.socketConnection$.subscribe((message: ISocketBaseResponse) => {
+      if (
+        [
+          MatchResponseTypeEnum.MATCH_STARTED,
+          MatchResponseTypeEnum.RECONNECTED,
+        ].includes(message.type)
+      ) {
+        const ongoingGameMessage = <IMatchStartedResponse>message;
+        this.myColor = ongoingGameMessage.color;
+
+        this._router.navigate(['play']);
+      }
     });
 
     // Register
     this._socket$.next({
       type: MatchRequestTypeEnum.MATCHMAKING,
       username,
-    });
-  }
-
-  move() {
-    this._socket$.next({
-      type: 1,
-      fromColumn: 4,
-      fromRow: 1,
-      toColumn: 4,
-      toRow: 3,
     });
   }
 }

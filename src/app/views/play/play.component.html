@@ -2,7 +2,13 @@
   <div class="main">
     <div class="board">
       @for(square of squares(); track $index) {
-      <div class="square" [ngClass]="{ black: square.isBlack }"></div>
+      <div class="square" [ngClass]="{ black: square.isBlack }">
+        @let piece = pieces()[square.position];
+
+        @if(piece) {
+        <img [src]="piece.image" height="80" [alt]="piece.value" />
+        }
+      </div>
       }
     </div>
   </div>
