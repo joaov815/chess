@@ -1,5 +1,9 @@
 <div class="main-container">
   <div class="form-wrapper">
+    @if(isSearching()) {
+    <div>Searching player...</div>
+    } @else {
+
     <h1>Register and start playing chess online!</h1>
 
     <form [formGroup]="form" (ngSubmit)="submit()">
@@ -19,5 +23,6 @@
 
       <chess-button type="submit" label="Start Game" />
     </form>
+    }
   </div>
 </div>

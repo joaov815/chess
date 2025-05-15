@@ -9,6 +9,8 @@ import {
 
 import { ButtonComponent } from '../../components/button/button.component';
 import { MatchService } from '../../services/match.service';
+import { MatchResponseTypeEnum } from '../../models/socket-base-response copy';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'chess-login',
@@ -17,7 +19,10 @@ import { MatchService } from '../../services/match.service';
   styleUrl: './login.component.scss',
 })
 export class LoginComponent {
-  constructor(private readonly _matchService: MatchService) {}
+  constructor(
+    private readonly _matchService: MatchService,
+    private readonly _router: Router
+  ) {}
 
   form = new FormGroup({
     username: new FormControl(null, [
@@ -26,6 +31,7 @@ export class LoginComponent {
     ]),
   });
   isSubmitted = signal(false);
+  isSearching = signal(false);
 
   getErrorMessage(control: FormControl): string {
     const errorsMessagesPerKey: Record<string, (...args: any) => string> = {
@@ -34,7 +40,7 @@ export class LoginComponent {
         `Should be at least ${obj.requiredLength} characters`,
     };
 
-    const firstError = Object.entries(control.errors ?? {})[0];
+    const firstError = Object.entries(control.errors ?? {})?.[0];
 
     if (!firstError) return '';
 
@@ -46,8 +52,21 @@ export class LoginComponent {
 
     if (this.form.invalid) return;
 
-    this._matchService.connect(this.form.value.username!, (a) => {
-      console.log(a);
+    this._matchService.connect({
+      username: this.form.value.username!,
+      onMessageCb: (a) => {
+        if (
+          [
+            MatchResponseTypeEnum.MATCH_STARTED,
+            MatchResponseTypeEnum.RECONNECTED,
+          ].includes(a.type)
+        ) {
+          this._router.navigate(['play']);
+        }
+      },
+      onConnected: () => {
+        this.isSearching.set(true);
+      },
     });
   }
 }

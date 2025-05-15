@@ -8,10 +8,16 @@ import {
   MatchResponseTypeEnum,
 } from '../models/socket-base-response copy';
 
-enum ConnectionStatus {
+export enum ConnectionStatus {
   CONNECTED,
   CONNECTING,
   DISCONNECTED,
+}
+
+interface IConnectOptions {
+  username: string;
+  onMessageCb: (body: ISocketBaseResponse) => void;
+  onConnected?: () => void;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -19,7 +25,7 @@ export class MatchService {
   private _socket$!: WebSocketSubject<any>;
   connectionStatus = ConnectionStatus.DISCONNECTED;
 
-  connect(username: string, onMessageCb: (body: ISocketBaseResponse) => void) {
+  connect({ username, onMessageCb, onConnected }: IConnectOptions) {
     if (this.connectionStatus !== ConnectionStatus.DISCONNECTED) return;
 
     this.connectionStatus = ConnectionStatus.CONNECTING;
@@ -29,8 +35,9 @@ export class MatchService {
       openObserver: {
         next: () => {
           this.connectionStatus = ConnectionStatus.CONNECTED;
-          sessionStorage.setItem('username', username);
           console.info('Connected 🟢');
+
+          onConnected?.();
         },
       },
       closeObserver: {
