@@ -1,5 +1,6 @@
 import { NgClass } from '@angular/common';
-import { Component, signal } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
+import { filter, switchMap } from 'rxjs';
 
 import {
   getBoardSquares,
@@ -19,12 +20,70 @@ export class PlayComponent {
   constructor(private readonly _matchService: MatchService) {}
 
   squares = signal<Square[]>([]);
-  pieces = signal<Record<string, Piece>>({});
+  piecesPerPosition = signal<Record<string, Piece>>({});
+  mySelectedPieceIdx = signal<number | null>(null);
+  lastPlayedFrom = signal<string | null>(null);
+  lastPlayedTo = signal<string | null>(null);
+  isMyTurn = signal(true); // TODO:
+
+  piecesPerSquareIdx = computed<Record<number, Piece>>(() => {
+    return Object.fromEntries(
+      Object.values(this.piecesPerPosition()).map((piece) => [
+        piece.square.index,
+        piece,
+      ])
+    );
+  });
+
+  highlighted = computed(() => [
+    this.mySelectedPieceIdx(),
+    this.lastPlayedFrom(),
+    this.lastPlayedTo(),
+  ]);
 
   ngOnInit() {
-    const color = this._matchService.myColor!;
+    this._matchService.myColor$
+      .pipe(
+        filter((color) => color !== null),
+        switchMap((color) => {
+          this.squares.set(getBoardSquares(color));
+          this.piecesPerPosition.set(getInitialPositions(this.squares()));
 
-    this.squares.set(getBoardSquares(color));
-    this.pieces.set(getInitialPositions(this.squares()));
+          return this._matchService.socketConnection$!;
+        })
+      )
+      .subscribe((res) => {
+        console.log(res);
+      });
+  }
+
+  selectOrMovePiece(index: number) {
+    const selected = this.piecesPerSquareIdx()[index];
+
+    if (this.mySelectedPieceIdx() != null && !selected) {
+      this.move(index);
+    } else if (selected.color == this._matchService.myColor) {
+      this.mySelectedPieceIdx.set(index);
+      this._matchService.getPieceAvailablePositions(
+        this.piecesPerSquareIdx()[index]
+      );
+    }
+  }
+
+  move(toSquareIdx: number): void {
+    if (!this.isMyTurn() || this.mySelectedPieceIdx() == null) {
+      return;
+    }
+
+    this._matchService.move(
+      this.squares()[this.mySelectedPieceIdx()!],
+      this.squares()[toSquareIdx]
+    );
+  }
+
+  getPieceAvailablePositions(index: number): void {
+    this._matchService.getPieceAvailablePositions(
+      this.piecesPerSquareIdx()[index]
+    );
   }
 }

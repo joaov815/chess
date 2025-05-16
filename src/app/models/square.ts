@@ -1,7 +1,11 @@
 import { Piece, PieceColorEnum, PieceEnum } from './piece';
 
 export class Square {
-  constructor(public rowIndex: number, public columnIndex: number) {}
+  constructor(
+    public readonly index: number,
+    public readonly rowIndex: number,
+    public readonly columnIndex: number
+  ) {}
 
   get position(): string {
     return `${this.rowIndex}${this.columnIndex}`;
@@ -20,10 +24,12 @@ export class Square {
 
 export function getBoardSquares(color: PieceColorEnum): Square[] {
   const squares: Square[] = [];
+  let squareIdx = 0;
 
   const setSquares = (i: number) => {
     for (let j = 0; j < 8; j++) {
-      squares.push(new Square(i, j));
+      squares.push(new Square(squareIdx, i, j));
+      squareIdx++;
     }
   };
 
