@@ -10,8 +10,12 @@
         }"
         (click)="selectOrMovePiece($index)"
       >
-        @let piece = piecesPerPosition()[square.position]; @if(piece) {
+        @let piece = piecesPerPosition()[square.position];
+        <!--  -->
+        @if(piece) {
         <img [src]="piece.image" height="80" [alt]="piece.value" />
+        } @else if (availablePlayPositions().includes(square.position)) {
+        <div class="available-play"></div>
         }
       </div>
       }

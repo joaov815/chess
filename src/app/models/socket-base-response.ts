@@ -1,9 +1,13 @@
-import { PieceColorEnum } from "./piece";
+import { PieceColorEnum } from './piece';
 
 export enum MatchResponseTypeEnum {
   PING,
   MATCH_STARTED,
   RECONNECTED,
+  MOVE,
+  AVAILABLE_POSITIONS,
+  INVALID_MOVE,
+  INVALID,
 }
 
 export interface ISocketBaseResponse {
