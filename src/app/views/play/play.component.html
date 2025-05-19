@@ -1,35 +1,47 @@
 <div class="container">
   <div class="main">
-    <div class="board">
-      @for(square of squares(); track square.position) {
-      <div
-        class="square"
-        [ngClass]="{
-          black: square.isBlack,
-          highlight: highlighted().includes(square.position)
-        }"
-        (click)="selectOrMovePiece(square.position)"
-      >
-        @let piece = piecesPerPosition()[square.position];
-        <!--  -->
-        <!-- <div>
+    <div class="chess-rows">
+      @for(c of rows(); track $index) {
+      <div class="row-column-content">{{ c }}</div>
+      }
+    </div>
+    <div>
+      <div class="board">
+        @for(square of squares(); track square.position) {
+        <div
+          class="square"
+          [ngClass]="{
+            black: square.isBlack,
+            highlight: highlighted().includes(square.position)
+          }"
+          (click)="selectOrMovePiece(square.position)"
+        >
+          @let piece = piecesPerPosition()[square.position];
+          <!--  -->
+          <!-- <div>
           {{ square.position }}
         </div> -->
 
-        @if(piece) {
-        <img [src]="piece.image" height="80" [alt]="piece.value" />
-        } @if (availablePlayPositions().includes(square.position) && isMyTurn())
-        {
-        <div
-          [ngClass]="
-            piece && availablePlayPositions().includes(piece.position)
-              ? 'available-play-with-piece'
-              : 'available-play'
-          "
-        ></div>
+          @if(piece) {
+          <img [src]="piece.image" height="80" [alt]="piece.value" />
+          } @if (availablePlayPositions().includes(square.position) &&
+          isMyTurn()) {
+          <div
+            [ngClass]="
+              piece && availablePlayPositions().includes(piece.position)
+                ? 'available-play-with-piece'
+                : 'available-play'
+            "
+          ></div>
+          }
+        </div>
         }
       </div>
-      }
+      <div class="chess-columns">
+        @for(c of columns(); track $index) {
+        <div class="row-column-content">{{ c }}</div>
+        }
+      </div>
     </div>
   </div>
 </div>

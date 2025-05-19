@@ -8,11 +8,37 @@ body {
   display: flex;
   justify-content: center;
 
+  .chess-rows {
+    display: grid;
+    grid-template-rows: repeat(8, 1fr);
+    padding-bottom: 1.75rem;
+
+    & > div {
+      padding-right: 0.5rem;
+    }
+  }
+
+  .chess-columns {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+
+    & > div {
+      padding-top: 0.5rem;
+    }
+  }
+
+  .row-column-content {
+    color: #ffffff80;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .board {
     display: grid;
     background: #bdbdbd;
     border: 1px solid #808080;
-    margin: 1rem;
+    // margin: 1rem;
 
     grid-template-columns: repeat(8, 1fr);
     grid-template-rows: repeat(8, 1fr);
@@ -54,4 +80,7 @@ body {
   background-color: #222;
   height: 100%;
   width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

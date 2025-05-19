@@ -23,7 +23,19 @@ export class PlayComponent {
   lastPlayedTo = signal<string | null>(null);
   isMyTurn = signal(true); // TODO:
   availablePlayPositions = signal<string[]>([]);
-  myColor?: PieceColorEnum;
+  myColor = signal<PieceColorEnum | null>(null);
+
+  rows = computed(() => {
+    const rows = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+
+    return this.myColor() == PieceColorEnum.WHITE ? rows.reverse() : rows;
+  });
+
+  columns = computed(() => {
+    const columns = Array.from({ length: 8 }, (_, i) => i + 1);
+
+    return this.myColor() == PieceColorEnum.WHITE ? columns : columns.reverse();
+  });
 
   highlighted = computed(() => [
     this.mySelectedPiecePosition(),
@@ -37,7 +49,7 @@ export class PlayComponent {
       .subscribe((state) => {
         const boardSquares = getBoardSquares(state.color);
 
-        this.myColor = state.color;
+        this.myColor.set(state.color);
         this.squares.set(boardSquares.map((s) => s[1]));
         this.squaresPerPosition = Object.fromEntries(boardSquares);
 
@@ -57,7 +69,7 @@ export class PlayComponent {
       this.piecesPerPosition.update((ppp) => {
         const piece = ppp[piecePos];
 
-        this.isMyTurn.set(piece.color !== this.myColor);
+        this.isMyTurn.set(piece.color !== this.myColor());
 
         piece.updatePosition(move.currentRow, move.currentColumn);
 
@@ -79,10 +91,10 @@ export class PlayComponent {
 
     if (
       this.mySelectedPiecePosition() != null &&
-      (!selected || selected.color !== this.myColor)
+      (!selected || selected.color !== this.myColor())
     ) {
       this.move(position);
-    } else if (selected.color == this.myColor) {
+    } else if (selected.color == this.myColor()) {
       this.mySelectedPiecePosition.set(position);
       this._matchService.getPieceAvailablePositions(selected);
     }
