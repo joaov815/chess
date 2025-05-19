@@ -99,7 +99,10 @@ export class PlayComponent {
   selectOrMovePiece(position: string): void {
     const selected = this.piecesPerPosition()[position];
 
-    if (
+    if (!selected) {
+      this.mySelectedPiecePosition.set(null);
+      this.availablePlayPositions.set([])
+    } else if (
       this.mySelectedPiecePosition() != null &&
       (!selected || selected.color !== this.myColor())
     ) {
