@@ -18,14 +18,18 @@ export class Piece {
   constructor(
     public readonly color: PieceColorEnum,
     public readonly value: PieceEnum,
-    public readonly square: Square
-  ) {
-    this.row = square.rowIndex;
-    this.column = square.columnIndex;
+    public column: number,
+    public row: number
+  ) {}
+
+  updatePosition(row: number, column: number): void {
+    this.row = row;
+    this.column = column;
   }
 
-  public readonly column: number;
-  public readonly row: number;
+  get position(): string {
+    return `${this.row}${this.column}`;
+  }
 
   get image(): string {
     const colorInitial = this.color == PieceColorEnum.WHITE ? 'w' : 'b';

@@ -2,7 +2,6 @@ import { Piece, PieceColorEnum, PieceEnum } from './piece';
 
 export class Square {
   constructor(
-    public readonly index: number,
     public readonly rowIndex: number,
     public readonly columnIndex: number
   ) {}
@@ -22,14 +21,13 @@ export class Square {
   }
 }
 
-export function getBoardSquares(color: PieceColorEnum): Square[] {
-  const squares: Square[] = [];
-  let squareIdx = 0;
+export function getBoardSquares(color: PieceColorEnum): [string, Square][] {
+  const squares: [string, Square][] = [];
 
   const setSquares = (i: number) => {
     for (let j = 0; j < 8; j++) {
-      squares.push(new Square(squareIdx, i, j));
-      squareIdx++;
+      const sq = new Square(i, j);
+      squares.push([sq.position, sq]);
     }
   };
 
@@ -46,8 +44,7 @@ export function getBoardSquares(color: PieceColorEnum): Square[] {
   return squares;
 }
 
-export function getInitialPositions(squares: Square[]): Record<string, Piece> {
-  const board = Object.fromEntries(squares.map((sq) => [sq.position, sq]));
+export function getInitialPositions(): Record<string, Piece> {
   const piecesPerPosition: Record<string, Piece> = {};
 
   for (let i = 0; i < 16; i++) {
@@ -59,7 +56,8 @@ export function getInitialPositions(squares: Square[]): Record<string, Piece> {
     piecesPerPosition[position] = new Piece(
       isWhite ? PieceColorEnum.WHITE : PieceColorEnum.BLACK,
       PieceEnum.PAWN,
-      board[position]
+      column,
+      row
     );
   }
 
@@ -75,7 +73,8 @@ export function getInitialPositions(squares: Square[]): Record<string, Piece> {
       piecesPerPosition[position] = new Piece(
         isWhite ? PieceColorEnum.WHITE : PieceColorEnum.BLACK,
         piecesValues[j],
-        board[position]
+        column,
+        row
       );
     }
   }
@@ -90,7 +89,8 @@ export function getInitialPositions(squares: Square[]): Record<string, Piece> {
     piecesPerPosition[position] = new Piece(
       isWhite ? PieceColorEnum.WHITE : PieceColorEnum.BLACK,
       isEven ? PieceEnum.QUEEN : PieceEnum.KING,
-      board[position]
+      column,
+      row
     );
   }
 

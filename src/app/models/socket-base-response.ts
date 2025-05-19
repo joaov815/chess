@@ -1,4 +1,5 @@
-import { PieceColorEnum } from './piece';
+import { Piece, PieceColorEnum } from './piece';
+import { IPieceHistory } from './piece-history';
 
 export enum MatchResponseTypeEnum {
   PING,
@@ -16,4 +17,15 @@ export interface ISocketBaseResponse {
 
 export interface IMatchStartedResponse extends ISocketBaseResponse {
   color: PieceColorEnum;
+  pieces: Piece[];
+}
+
+export interface IMatchState {
+  color: PieceColorEnum;
+  piecesPerPosition: Record<string, Piece>;
+}
+
+export interface IMoveResponse extends ISocketBaseResponse {
+  history: IPieceHistory;
+  capturedEnPassantPawn?: string;
 }

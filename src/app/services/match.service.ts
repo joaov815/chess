@@ -1,19 +1,22 @@
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
+import { BehaviorSubject, filter, Observable } from 'rxjs';
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 
 import { environment } from '../../enviroments/environment';
 import { MatchRequestTypeEnum } from '../models/socket-base-request';
 import {
   IMatchStartedResponse,
+  IMatchState,
+  IMoveResponse,
   ISocketBaseResponse,
   MatchResponseTypeEnum,
 } from '../models/socket-base-response';
-import { BehaviorSubject, filter, Observable } from 'rxjs';
-import { Piece, PieceColorEnum } from '../models/piece';
-import { Router } from '@angular/router';
-import { Square } from '../models/square';
+import { Piece } from '../models/piece';
+import { getInitialPositions, Square } from '../models/square';
 import { IMovePayload } from '../models/payloads/move-payload';
 import { IGetAvailablePositionsPayload } from '../models/payloads/get-available-positions-payload';
+import { IAvailablePositions } from '../models/response/available-positions-response';
 
 export enum ConnectionStatus {
   CONNECTED,
@@ -40,8 +43,9 @@ export class MatchService {
 
   socketConnection$?: Observable<ISocketBaseResponse>;
   connectionStatus = ConnectionStatus.DISCONNECTED;
-  myColor?: PieceColorEnum;
-  myColor$ = new BehaviorSubject<PieceColorEnum | null>(null);
+  state$ = new BehaviorSubject<IMatchState | null>(null);
+  move$ = new BehaviorSubject<IMoveResponse | null>(null);
+  availablePositions$ = new BehaviorSubject<string[] | null>(null);
 
   connect({ username, onConnected }: IConnectOptions) {
     if (this.connectionStatus !== ConnectionStatus.DISCONNECTED) return;
@@ -70,14 +74,11 @@ export class MatchService {
       },
     });
 
-    this.socketConnection$ = this._socket$
-      .asObservable()
-      .pipe(
-        filter(
-          (message: ISocketBaseResponse) =>
-            message.type !== MatchResponseTypeEnum.PING
-        )
-      );
+    this.socketConnection$ = this._socket$.asObservable().pipe(
+      filter((message: ISocketBaseResponse) => {
+        return message.type !== MatchResponseTypeEnum.PING;
+      })
+    );
 
     this.socketConnection$.subscribe((message: ISocketBaseResponse) => {
       if (
@@ -86,12 +87,11 @@ export class MatchService {
           MatchResponseTypeEnum.RECONNECTED,
         ].includes(message.type)
       ) {
-        const ongoingGameMessage = <IMatchStartedResponse>message;
-
-        this.myColor = ongoingGameMessage.color;
-        this.myColor$.next(this.myColor);
-
-        this._router.navigate(['play']);
+        this._onMatchStartedOrReconnected(message);
+      } else if (message.type === MatchResponseTypeEnum.MOVE) {
+        this.move$.next(<IMoveResponse>message);
+      } else if (message.type === MatchResponseTypeEnum.AVAILABLE_POSITIONS) {
+        this.availablePositions$.next((<IAvailablePositions>message).positions);
       }
     });
 
@@ -100,6 +100,31 @@ export class MatchService {
       type: MatchRequestTypeEnum.MATCHMAKING,
       username,
     });
+  }
+
+  private _onMatchStartedOrReconnected(message: ISocketBaseResponse): void {
+    const ongoingGameMessage = <IMatchStartedResponse>message;
+    let piecesPerPosition: Record<string, Piece>;
+
+    if (message.type === MatchResponseTypeEnum.MATCH_STARTED) {
+      piecesPerPosition = getInitialPositions();
+    } else {
+      piecesPerPosition = Object.fromEntries(
+        ongoingGameMessage.pieces.map((p) => {
+          const piece = new Piece(p.color, p.value, p.column, p.row);
+          return [piece.position, piece];
+        })
+      );
+    }
+
+    const state: IMatchState = {
+      color: ongoingGameMessage.color,
+      piecesPerPosition,
+    };
+
+    this.state$.next(state);
+
+    this._router.navigate(['play']);
   }
 
   move(from: Square, to: Square): void {

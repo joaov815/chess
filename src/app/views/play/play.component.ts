@@ -1,16 +1,10 @@
 import { NgClass } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
-import { filter, switchMap } from 'rxjs';
+import { filter } from 'rxjs';
 
-import {
-  getBoardSquares,
-  getInitialPositions,
-  Square,
-} from '../../models/square';
-import { Piece } from '../../models/piece';
+import { getBoardSquares, Square } from '../../models/square';
+import { Piece, PieceColorEnum } from '../../models/piece';
 import { MatchService } from '../../services/match.service';
-import { MatchResponseTypeEnum } from '../../models/socket-base-response';
-import { IAvailablePositions } from '../../models/response/available-positions-response';
 
 @Component({
   selector: 'chess-play',
@@ -22,72 +16,92 @@ export class PlayComponent {
   constructor(private readonly _matchService: MatchService) {}
 
   squares = signal<Square[]>([]);
+  squaresPerPosition: Record<string, Square> = {};
   piecesPerPosition = signal<Record<string, Piece>>({});
-  mySelectedPieceIdx = signal<number | null>(null);
+  mySelectedPiecePosition = signal<string | null>(null);
   lastPlayedFrom = signal<string | null>(null);
   lastPlayedTo = signal<string | null>(null);
   isMyTurn = signal(true); // TODO:
   availablePlayPositions = signal<string[]>([]);
-
-  piecesPerSquareIdx = computed<Record<number, Piece>>(() => {
-    return Object.fromEntries(
-      Object.values(this.piecesPerPosition()).map((piece) => [
-        piece.square.index,
-        piece,
-      ])
-    );
-  });
+  myColor?: PieceColorEnum;
 
   highlighted = computed(() => [
-    this.mySelectedPieceIdx(),
+    this.mySelectedPiecePosition(),
     this.lastPlayedFrom(),
     this.lastPlayedTo(),
   ]);
 
-  ngOnInit() {
-    this._matchService.myColor$
-      .pipe(
-        filter((color) => color !== null),
-        switchMap((color) => {
-          this.squares.set(getBoardSquares(color));
-          this.piecesPerPosition.set(getInitialPositions(this.squares()));
+  ngOnInit(): void {
+    this._matchService.state$
+      .pipe(filter((state) => state !== null))
+      .subscribe((state) => {
+        const boardSquares = getBoardSquares(state.color);
 
-          return this._matchService.socketConnection$!;
-        })
-      )
-      .subscribe((res) => {
-        if (res.type === MatchResponseTypeEnum.AVAILABLE_POSITIONS) {
-          this.availablePlayPositions.set((<IAvailablePositions>res).positions);
-        }
-        console.log(res);
+        this.myColor = state.color;
+        this.squares.set(boardSquares.map((s) => s[1]));
+        this.squaresPerPosition = Object.fromEntries(boardSquares);
+
+        this.piecesPerPosition.set(state.piecesPerPosition);
       });
+
+    this._matchService.availablePositions$?.subscribe((positions) => {
+      this.availablePlayPositions.set(positions ?? []);
+    });
+
+    this._matchService.move$?.subscribe((res) => {
+      if (!res) return;
+
+      const { history: move, capturedEnPassantPawn } = res;
+      const piecePos = `${move.previousRow}${move.previousColumn}`;
+
+      this.piecesPerPosition.update((ppp) => {
+        const piece = ppp[piecePos];
+
+        this.isMyTurn.set(piece.color !== this.myColor);
+
+        piece.updatePosition(move.currentRow, move.currentColumn);
+
+        ppp[piece.position] = piece;
+
+        delete ppp[piecePos];
+
+        if (capturedEnPassantPawn && ppp[capturedEnPassantPawn]) {
+          delete ppp[capturedEnPassantPawn];
+        }
+
+        return ppp;
+      });
+    });
   }
 
-  selectOrMovePiece(index: number) {
-    const selected = this.piecesPerSquareIdx()[index];
+  selectOrMovePiece(position: string): void {
+    const selected = this.piecesPerPosition()[position];
 
-    if (this.mySelectedPieceIdx() != null && !selected) {
-      this.move(index);
-    } else if (selected.color == this._matchService.myColor) {
-      this.mySelectedPieceIdx.set(index);
+    if (
+      this.mySelectedPiecePosition() != null &&
+      (!selected || selected.color !== this.myColor)
+    ) {
+      this.move(position);
+    } else if (selected.color == this.myColor) {
+      this.mySelectedPiecePosition.set(position);
       this._matchService.getPieceAvailablePositions(selected);
     }
   }
 
-  move(toSquareIdx: number): void {
-    if (!this.isMyTurn() || this.mySelectedPieceIdx() == null) {
+  move(toPosition: string): void {
+    if (!this.isMyTurn() || this.mySelectedPiecePosition() == null) {
       return;
     }
 
     this._matchService.move(
-      this.squares()[this.mySelectedPieceIdx()!],
-      this.squares()[toSquareIdx]
+      this.squaresPerPosition[this.mySelectedPiecePosition()!],
+      this.squaresPerPosition[toPosition]
     );
   }
 
-  getPieceAvailablePositions(index: number): void {
+  getPieceAvailablePositions(position: string): void {
     this._matchService.getPieceAvailablePositions(
-      this.piecesPerSquareIdx()[index]
+      this.piecesPerPosition()[position]
     );
   }
 }
