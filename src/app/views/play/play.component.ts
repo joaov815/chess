@@ -5,10 +5,11 @@ import { filter } from 'rxjs';
 import { getBoardSquares, Square } from '../../models/square';
 import { Piece, PieceColorEnum } from '../../models/piece';
 import { MatchService } from '../../services/match.service';
+import { UsernameBadgeComponent } from '../../components/username-badge/username-badge.component';
 
 @Component({
   selector: 'chess-play',
-  imports: [NgClass],
+  imports: [NgClass, UsernameBadgeComponent],
   templateUrl: './play.component.html',
   styleUrl: './play.component.scss',
 })
@@ -24,6 +25,8 @@ export class PlayComponent {
   isMyTurn = signal(true); // TODO:
   availablePlayPositions = signal<string[]>([]);
   myColor = signal<PieceColorEnum | null>(null);
+  topUsername = signal<string | null>(null);
+  bottomUsername = signal<string | null>(null);
 
   rows = computed(() => {
     const rows = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
@@ -48,10 +51,17 @@ export class PlayComponent {
       .pipe(filter((state) => state !== null))
       .subscribe((state) => {
         const boardSquares = getBoardSquares(state.color);
+        const isWhite = state.color === PieceColorEnum.WHITE;
 
         this.myColor.set(state.color);
         this.squares.set(boardSquares.map((s) => s[1]));
         this.squaresPerPosition = Object.fromEntries(boardSquares);
+        this.topUsername.set(
+          isWhite ? state.blackUsername : state.whiteUsername
+        );
+        this.bottomUsername.set(
+          isWhite ? state.whiteUsername : state.blackUsername
+        );
 
         this.piecesPerPosition.set(state.piecesPerPosition);
       });

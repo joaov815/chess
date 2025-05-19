@@ -120,6 +120,8 @@ export class MatchService {
     const state: IMatchState = {
       color: ongoingGameMessage.color,
       piecesPerPosition,
+      blackUsername: ongoingGameMessage.blackUsername,
+      whiteUsername: ongoingGameMessage.whiteUsername
     };
 
     this.state$.next(state);

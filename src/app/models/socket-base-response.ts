@@ -18,11 +18,15 @@ export interface ISocketBaseResponse {
 export interface IMatchStartedResponse extends ISocketBaseResponse {
   color: PieceColorEnum;
   pieces: Piece[];
+  blackUsername: string;
+  whiteUsername: string;
 }
 
 export interface IMatchState {
   color: PieceColorEnum;
   piecesPerPosition: Record<string, Piece>;
+  blackUsername: string;
+  whiteUsername: string;
 }
 
 export interface IMoveResponse extends ISocketBaseResponse {

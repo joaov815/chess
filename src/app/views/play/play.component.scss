@@ -5,8 +5,10 @@ body {
 }
 
 .main {
-  display: flex;
-  justify-content: center;
+  .board-container {
+    display: flex;
+    justify-content: center;
+  }
 
   .chess-rows {
     display: grid;
